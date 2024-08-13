@@ -1,56 +1,26 @@
 import fitz
-import PyPDF2
 from PyPDF2 import PdfReader, PdfWriter
-import os, csv, re
+import csv # MLP, JAVA, TDS, BA, PDSA
 
-def split_pdf_by_heading(pdf_link, type):
-    document = fitz.open(pdf_link)
-    term_info = os.path.basename(pdf_link).split('.')[0]
-    split_points = []; current_split_start = 0
-    for page_num in range(len(document)):
-        page = document.load_page(page_num)
-        blocks = page.get_text("dict")["blocks"]
-        for block in blocks:
-            if block['type'] == 0: # text block
-                for line in block['lines']:
-                    for span in line['spans']:
-                        # print(span['text'],span['size'])
-                        if span['size'] >= 18:
-                            split_points.append((page_num, span['text']))
-                            current_split_start = page_num
-                            break
-    split_points.append((len(document),None)); split_points=split_points[1:]
-    # print('Page numbers, Course name: ',split_points)
-    reader = PdfReader(pdf_link)
-    for i in range(len(split_points) - 1):
-        start_page, heading = split_points[i]
-        end_page, _ = split_points[i + 1]
-
-        writer = PdfWriter()
-        for page_num in range(start_page, end_page+1):
-            if page_num != len(document):
-                writer.add_page(reader.pages[page_num])
-        # Save the split PDF
-        if type=='Questions':
-            heading_dir = os.path.join('3 SplittedPTQs','Questions', heading)
-        elif type=='Answers':
-            heading_dir = os.path.join('3 SplittedPTQs','Answers', heading)
-        else: raise KeyError
-        os.makedirs(heading_dir, exist_ok=True)
-        output_pdf_path = os.path.join(heading_dir, f"{term_info}.pdf")
-        with open(output_pdf_path, "wb") as output_pdf_file:
-            writer.write(output_pdf_file)
-    print(f"Saved splited pdfs from {term_info}")
-
-
-def Convert2QuestionPDF(filename):
-    file = os.path.join('1 PTQs',filename)
+def ConvertNSaveAnswers(file):
     def color(num):
         return 'Green' if num==32512 else 'Red' if num==16711680 else 'Other'
     doc = fitz.open(file)
+    answer = open('./AnswerCSVs/key.txt','w',newline='')
+    write = csv.writer(answer)
+    #writing question paper id in key
+    text=doc[0].get_text().strip().split('\n')
+    for x in text: 
+        if 'IIT M' in x and 'QP' in x:
+            write.writerow([x[x.index('QP'):].split()[0]])
+            break
+    #questions data saving
     def add(Question_id,Question_marks,Question_type,COptions,WOptions):
-        if Question_id==None:
-            return None
+        if Question_id==None: return 
+        if Question_type in ['MSQ','MCQ']:
+            write.writerow([Question_id,Question_marks,Question_type,'$'.join(COptions),'$'.join(WOptions)])
+        elif Question_type in ['SA']:
+            write.writerow([Question_id,Question_marks,Question_type,':'.join(COptions[0].split(' to ')),'$'.join(WOptions)])
         Question_id=None;Question_marks=None;Question_type=None;COptions=[];WOptions=[]
     Qcount=0;Question_id=None;Question_marks=None;Question_type=None;COptions=[];WOptions=[]
     for i in range(len(doc)):
@@ -67,14 +37,12 @@ def Convert2QuestionPDF(filename):
                 for l in b["lines"]:  # iterate through the text lines
                     for s in l["spans"]:  # iterate through the text spans
                         if s['size']==18 and s['text'][:5]!='Group':
-                            # add file name on top right corner in bold brown
-                            text = filename
-                            page.draw_rect(rect, color=(1, 1, 1), fill=(1, 1, 1))
-                            page.insert_text(fitz.Point(20,20), text, fontsize=17, fontname='helv', color=(0.6, 0.3, 0))
                             if Question_id!=None: 
                                 add(Question_id,Question_marks,Question_type,COptions,WOptions)
                             Question_id=None;Question_marks=None;Question_type=None;COptions=[];WOptions=[]
+                            write.writerow([s['text']])
                         elif ('Question Id' in s['text'] and 'COMPREHENSION' not in s['text']):
+                            print('hi')
                             if Question_id!=None: add(Question_id,Question_marks,Question_type,COptions,WOptions)
                             Question_id=None;Question_marks=None;Question_type=None;COptions=[];WOptions=[]
                             Qcount+=1
@@ -105,40 +73,44 @@ def Convert2QuestionPDF(filename):
                             add(Question_id,Question_marks,Question_type,COptions,WOptions)
                             Question_id=None;Question_marks=None;Question_type=None;COptions=[];WOptions=[]
     page.apply_redactions()
-    doc.save(os.path.join('2 QuestionPTQs',filename))
+    doc.save("Jan2024_modified.pdf")
     doc.close()
-    print(f'{Qcount} questions convered!')
+    print(f'Total no of questions:{Qcount}')
+    return "Jan2024_modified.pdf"
 
+def AddAnswersEnd(split_pdf):
+    split_pdf = open(split_pdf, 'rb')
+    split_pdf = ConvertNSaveAnswers(split_pdf)  # Assuming this works correctly
 
-def filter_pdfs(pdf_list):
-    def extract_info(filename):
-        match = re.search(r'(\d{4})_(T\d)_(Et)_(\w+)\.pdf', filename)
-        if match:
-            year, term, quiz, session = match.groups()
-            return year, term, quiz, session
-        return None
-    file_dict = {}
-    for pdf in pdf_list:
-        info = extract_info(pdf)
-        if info:
-            year, term, quiz, session = info
-            key = (year, term, quiz)
-            if key in file_dict:
-                del file_dict[key] # If a file with the same year, term, quiz but different session exists, remove it
-            file_dict[key] = pdf
-    return list(file_dict.values())
+    lines = []
+    with open('./AnswerCSVs/key.txt', "r") as file:
+        reader = csv.reader(file)
+        subject_name = next(reader)[0]
+        lines.append(f"Subject: {subject_name}")
+        lines.append("-"*50)
+        for row in reader:
+            try:
+                if row[1] == 0: continue
+                question_number = row[0]
+                question_type = row[2]
+                correct_answers = ", ".join(row[-2].split('$'))
+                if question_type in ["MCQ", "MSQ"]:
+                    line = f"Q {question_number} [{question_type}]: Correct: {correct_answers}"
+                else:  # For SA (Short Answer) questions
+                    line = f"Q {question_number} [{question_type}]: Answer: {correct_answers}"
+                lines.append(line)
+            except:
+                pass
+    paragraph = "\n".join(lines)
 
+    doc = fitz.open(split_pdf)
+    page = doc._newPage()
+    text_position = (50, 100)
+    page.insert_text(text_position, paragraph, fontsize=12)
+    doc.save("output.pdf")
+    doc.close()
 
-def combine_pdfs(pdf_files, output_path):
-    output_dir = os.path.dirname(output_path)
-    os.makedirs(output_dir, exist_ok=True)
-    pdf_writer = PyPDF2.PdfWriter()
-    for pdf_file in pdf_files:
-        with open(pdf_file, 'rb') as file:
-            pdf_reader = PyPDF2.PdfReader(file)
-            for page_num in range(len(pdf_reader.pages)):
-                page = pdf_reader.pages[page_num]
-                pdf_writer.add_page(page)
-    with open(output_path, 'wb') as output_pdf:
-        pdf_writer.write(output_pdf)
-    print(f'Combined PDF saved as {output_path}')
+    # csv_file = './AnswerCSVs/key.txt'
+    # with open(csv_file, 'r') as f:
+    #     text_lines = f.readlines()
+
