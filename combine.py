@@ -40,3 +40,6 @@ for course in os.listdir('5 CombinedCourses'):
     doc.close()
     os.replace('temp.pdf', first_file)
     combine_pdfs(pdfs, os.path.join('6 FinalOutput',f'{course}.pdf'))
+
+
+print("~ Combined! ~")

@@ -19,4 +19,4 @@ for file in os.listdir('2 QuestionPTQs'):
 
 # combine sp
 
-print("~ The End ~")
+print("~ Splitted! ~")
