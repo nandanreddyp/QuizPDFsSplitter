@@ -14,13 +14,12 @@ def split_pdf_by_heading(pdf_link, type):
             if block['type'] == 0: # text block
                 for line in block['lines']:
                     for span in line['spans']:
-                        # print(span['text'],span['size'])
-                        if span['size'] >= 18:
+                        if span['size'] >= 18 and 'Technology' not in span['text']:
                             split_points.append((page_num, span['text']))
                             current_split_start = page_num
-                            break
-    split_points.append((len(document),None)); split_points=split_points[1:]
-    # print('Page numbers, Course name: ',split_points)
+                            # break
+    split_points.append((len(document),None))
+    # print(term_info,split_points)
     reader = PdfReader(pdf_link)
     for i in range(len(split_points) - 1):
         start_page, heading = split_points[i]
