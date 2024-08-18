@@ -46,7 +46,12 @@ def split_pdf_by_heading(pdf_link, type):
 def Convert2QuestionPDF(filename):
     file = os.path.join('1 PTQs',filename)
     def color(num):
-        return 'Green' if num==32512 else 'Red' if num==16711680 else 'Other'
+        if num in [32768, 32512, ]:
+            return 'Green'
+        elif num in [16711680, ]:
+            return 'Red'
+        else:
+            return 'Other'
     doc = fitz.open(file)
     def add(Question_id,Question_marks,Question_type,COptions,WOptions):
         if Question_id==None:
@@ -107,7 +112,7 @@ def Convert2QuestionPDF(filename):
     page.apply_redactions()
     doc.save(os.path.join('2 QuestionPTQs',filename))
     doc.close()
-    print(f'{Qcount} questions convered!')
+    print(f'Questions convered!')
 
 
 def filter_pdfs(pdf_list):
