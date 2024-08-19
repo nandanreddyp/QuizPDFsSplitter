@@ -1,5 +1,7 @@
 import os, re, fitz
-from functions import combine_pdfs, filter_pdfs
+from functions import combine_pdfs, add_term_info
+
+add_term_info()
 
 for course in os.listdir('4 SelectCourses'):
     course_path = os.path.join('4 SelectCourses', course)
@@ -8,13 +10,11 @@ for course in os.listdir('4 SelectCourses'):
         # Answers
         answers_folder = os.path.join(course_path, 'Answers')
         answer_pdfs = sorted([os.path.join(answers_folder, pdf) for pdf in os.listdir(answers_folder) if pdf.endswith('.pdf')],reverse=True)
-        answer_pdfs = filter_pdfs(answer_pdfs)
         combine_pdfs(answer_pdfs, os.path.join('5 CombinedCourses',course,'Combined_Answers.pdf'))
 
         # Questions
         questions_folder = os.path.join(course_path, 'Questions')
         question_pdfs = sorted([os.path.join(questions_folder, pdf) for pdf in os.listdir(questions_folder) if pdf.endswith('.pdf')],reverse=True)
-        question_pdfs = filter_pdfs(question_pdfs)
         combine_pdfs(question_pdfs, os.path.join('5 CombinedCourses',course,'Combined_Questions.pdf'))
 
     else:
