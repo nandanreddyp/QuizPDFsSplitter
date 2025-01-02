@@ -85,9 +85,9 @@ def split_pdf_by_heading(pdf_link, type):
                 writer.add_page(reader.pages[page_num])
         # Save the split PDF
         if type=='Questions':
-            heading_dir = os.path.join('3 SplittedPTQs','Questions', heading)
+            heading_dir = os.path.join('3 SplittedPTQs', heading, 'Questions')
         elif type=='Answers':
-            heading_dir = os.path.join('3 SplittedPTQs','Answers', heading)
+            heading_dir = os.path.join('3 SplittedPTQs', heading, 'Answers')
         else: raise KeyError
         os.makedirs(heading_dir, exist_ok=True)
         output_pdf_path = os.path.join(heading_dir, f"{term_info}.pdf")
