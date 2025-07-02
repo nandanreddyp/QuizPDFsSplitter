@@ -6,6 +6,7 @@ print("Om gum ganapataye namaha!")
 for file in os.listdir('1 PTQs'):
     if file.lower().endswith('.pdf'):
         Convert2QuestionPDF(file)
+        
 
 for file in os.listdir('1 PTQs'):
     if file.lower().endswith('.pdf'):

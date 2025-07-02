@@ -7,7 +7,7 @@ import os, re
 def Convert2QuestionPDF(filename):
     file = os.path.join('1 PTQs',filename)
     def color(num):
-        if num in [32768, 32512, ]:
+        if num in [32768, 32512, -65536, -16744448]:
             return 'Green'
         elif num in [16711680, ]:
             return 'Red'
@@ -27,7 +27,8 @@ def Convert2QuestionPDF(filename):
             elif b['type'] == 0:
                 for l in b["lines"]:  # iterate through the text lines
                     for s in l["spans"]:  # iterate through the text spans
-                        # print(s['text'])
+                        # print(s['text'], s['color'])
+                        # breakpoint()
                         if s['size'] >= 18: # reset question type
                             Question_type=None
                         elif ('Question Type' in s['text'] and 'COMPREHENSION' not in s['text']):
