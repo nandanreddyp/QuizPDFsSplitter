@@ -1,6 +1,7 @@
 __pycache__
 venv
-1 PTQs
+/1 PTQs/*
+!/1 PTQs/.gitkeep
 2 QuestionPTQs
 3 SplittedPTQs
 4 SelectCourses
